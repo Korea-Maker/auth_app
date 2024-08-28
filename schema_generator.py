@@ -6,7 +6,7 @@ def mongo_connect():
     load_dotenv()
     username = os.environ.get('MONGO_USERNAME')
     password = os.environ.get('MONGO_PASSWORD')
-    client = MongoClient(f'mongodb://{username}:{password}@localhost:27017/')
+    client = MongoClient(f'mongodb://localhost:27017/')
     db = client['auth']
     return db
 
