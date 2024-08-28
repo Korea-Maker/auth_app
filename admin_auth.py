@@ -82,6 +82,8 @@ def login():
         token_str = token.decode('utf-8')  # Decode bytes to string
         response = make_response(jsonify({"status": "success"}))
         response.set_cookie('token', token_str, httponly=True, secure=True, samesite='None')
+        response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
         print(f"Set-Cookie Header: token={token_str}")  # Debugging output
         return response
     else:
