@@ -55,7 +55,7 @@ def generate_token(username):
 def verify_token(token):
     try:
         decoded = jwt.decode(token, JWT_SECRET_KEY)
-        if datetime.now(timezone.utc) > datetime.fromtimestamp(decoded['exp'], timezone):
+        if datetime.now(timezone.utc) > datetime.fromtimestamp(decoded['exp'], timezone.utc):
             print("토큰이 만료되었습니다")
             return None
         return decoded
