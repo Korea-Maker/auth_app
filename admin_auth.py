@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from bson import ObjectId
 
 load_dotenv()
 
@@ -62,7 +63,7 @@ def verify_token(token):
     except Exception as e:
         print(f"토큰 디코딩 오류: {e}")
         return None
-
+    
 @admin_auth_bp.route('/login', methods=['POST'])
 def login():
     db = connect_mongo()
@@ -74,7 +75,7 @@ def login():
         token = generate_token(id)
         token_str = token.decode('utf-8')  # 바이트를 문자열로 디코딩 => 응답에 포함하기 위함인데 이전에 바이트로 응답을 보낼 경우 에러가 발생했었음
         response = make_response(jsonify({"status": "성공"}))
-        response.set_cookie('token', token_str, httponly=True, secure=True, samesite='None')
+        response.set_cookie('token', token_str, httponly=True, secure=True, samesite='Lax')
         response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
