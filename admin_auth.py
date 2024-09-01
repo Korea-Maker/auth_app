@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, make_response
+from functools import wraps
 from authlib.jose import jwt
 from datetime import datetime, timedelta, timezone
 import os
@@ -64,6 +65,23 @@ def verify_token(token):
         print(f"토큰 디코딩 오류: {e}")
         return None
     
+# middleware decorator 구현 (토큰이 없거나 유효하지 않은 경우 401 응답을 반환)
+def middleware_jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.cookies.get('token')
+        
+        if not token:
+            return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401
+        
+        decoded = verify_token(token)
+        if not decoded:
+            return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401
+
+        return f(*args, **kwargs)
+    
+    return decorated_function
+    
 @admin_auth_bp.route('/login', methods=['POST'])
 def login():
     db = connect_mongo()
@@ -83,30 +101,44 @@ def login():
         return jsonify({"status": "실패"}), 401
 
 @admin_auth_bp.route('/protected', methods=['GET'])
+@middleware_jwt_required
 def protected():
-    token = request.cookies.get('token')
-    if not token:
-        return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401
-    
-    decoded = verify_token(token)
-    if not decoded:
-        return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401
-
     return jsonify({"status": "성공", "message": "보호된 경로에 대한 액세스가 허용되었습니다"})
 
-@admin_auth_bp.route('/update', methods=['PUT'])
-def update_auth():
-    token = request.cookies.get('token')
-    if not token:
-        return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401
+
+# @admin_auth_bp.route('/update', methods=['PUT'])
+# @middleware_jwt_required
+# def update_auth():
+#     token = request.cookies.get('token')
+#     if not token:
+#         return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401
     
-    decoded = verify_token(token)
-    if not decoded:
-        return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401
+#     decoded = verify_token(token)
+#     if not decoded:
+#         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401
     
-    db = connect_mongo()
-    id = decoded['username']
-    new_pw = request.json.get('new_pw')
+#     db = connect_mongo()
+#     id = decoded['username']
+#     new_pw = request.json.get('new_pw')
     
-    mongo_update_user(db, id, new_pw)
-    return jsonify({"status": "성공"})
+#     mongo_update_user(db, id, new_pw)
+#     return jsonify({"status": "성공"})
+
+# @admin_auth_bp.route('/users/update', methods=['POST'])
+# @middleware_jwt_required
+# def update_user():
+#     token = request.cookies.get('token')
+#     if not token:
+#         return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401
+    
+#     decoded = verify_token(token)
+#     if not decoded:
+#         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401
+    
+#     db = connect_mongo()
+#     name = request.json.get('name')
+#     birth = request.json.get('birth')
+#     location = request.json.get('location')
+#     phone = request.json.get('phone')
+#     email = request.json.get('email')
+#     education = request.json.get('education')
