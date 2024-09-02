@@ -12,7 +12,7 @@ load_dotenv()
 
 # Blueprint Setup
 admin_auth_bp = Blueprint('admin_auth_bp', __name__)
-CORS(admin_auth_bp, resources={r"/update": {"origins": "*"}}, supports_credentials=True)
+CORS(admin_auth_bp, resources={r"/authenticate": {"origins": "*"}}, supports_credentials=True)
 
 # Environment Configuration
 MONGO_USERNAME = os.environ.get('MONGO_USERNAME_AUTH')
