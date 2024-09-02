@@ -64,15 +64,15 @@ def generate_refresh_token(username):
     token = jwt.encode(header, payload, REFRESH_SECRET_KEY)
     return token
 
-def verify_token(token):
+def verify_token(token, secret_key):
     try:
-        decoded = jwt.decode(token, JWT_SECRET_KEY)
+        decoded = jwt.decode(token, secret_key)
         if datetime.now(timezone.utc) > datetime.fromtimestamp(decoded['exp'], timezone.utc):
-            print("토큰이 만료되었습니다")
+            print("Token has expired")
             return None
         return decoded
     except Exception as e:
-        print(f"토큰 디코딩 오류: {e}")
+        print(f"Token decoding error: {e}")
         return None
     
 @admin_auth_bp.before_request  
