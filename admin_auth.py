@@ -151,7 +151,7 @@ def protected():
     if request.method == 'OPTIONS':
         # Handle preflight request
         response = make_response()
-        response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', 'https://resume.jongwook.xyz'))
         response.headers.add('Access-Control-Allow-Methods', 'GET, OPTIONS')
         response.headers.add('Access-Control-Allow-Headers', 'Authorization, Content-Type')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
