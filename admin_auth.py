@@ -18,6 +18,7 @@ MONGO_PORT = os.environ.get('MONGO_PORT')
 MONGO_DB = os.environ.get('MONGO_AUTH_DB')
 MONGO_COLLECTION = os.environ.get('MONGO_AUTH_COLLECTION')
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+REFRESH_SECRET_KEY = os.environ.get('REFRESH_SECRET_KEY')
 
 def connect_mongo():
     client = MongoClient(f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_DB}")
@@ -54,6 +55,15 @@ def generate_token(username):
     token = jwt.encode(header, payload, JWT_SECRET_KEY)
     return token
 
+def generate_refresh_token(username):
+    header = {"alg": "HS256"}
+    payload = {
+        "username": username,
+        "exp": datetime.now(timezone.utc) + timedelta(days=7)  # Refresh token expiration time
+    }
+    token = jwt.encode(header, payload, REFRESH_SECRET_KEY)
+    return token
+
 def verify_token(token):
     try:
         decoded = jwt.decode(token, JWT_SECRET_KEY)
@@ -67,29 +77,24 @@ def verify_token(token):
     
 @admin_auth_bp.before_request  
 def check_jwt():  
-    # Exclude the login endpoint  
-    if request.endpoint == 'admin_auth_bp.login':  
-        return  # No verification for login endpoint
+    if request.endpoint == 'admin_auth_bp.login' or request.endpoint == 'admin_auth_bp.refresh':  
+        return  # No verification for login and refresh endpoints
 
-    # Initialize token variable
     token = None
 
-    # Check for token in the Authorization header first
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
-        token = auth_header.split(' ')[1]  # Extract the token part from the header
+        token = auth_header.split(' ')[1]
     else:
-        # Fall back to checking the token in cookies
         token = request.cookies.get('token')
 
     if not token:
         return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401  
     
-    decoded = verify_token(token)  
+    decoded = verify_token(token, JWT_SECRET_KEY)  
     if not decoded:
         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401  
 
-    # Attach user information to the request for further processing
     request.user = decoded['username']
     
 @admin_auth_bp.route('/login', methods=['POST'])
@@ -100,15 +105,34 @@ def login():
     user = mongo_find_user(db, id, pw)
     
     if user is not None:
-        token = generate_token(id)
-        token_str = token.decode('utf-8')  # 바이트를 문자열로 디코딩 => 응답에 포함하기 위함인데 이전에 바이트로 응답을 보낼 경우 에러가 발생했었음
-        response = make_response(jsonify({"status": "성공"}))
-        response.set_cookie('token', token_str, httponly=True, secure=True, samesite='None')
+        access_token = generate_access_token(id)
+        refresh_token = generate_refresh_token(id)
+        access_token_str = access_token.decode('utf-8')
+        refresh_token_str = refresh_token.decode('utf-8')
+        
+        response = make_response(jsonify({"status": "성공", "access_token": access_token_str}))
+        response.set_cookie('refresh_token', refresh_token_str, httponly=True, secure=True, samesite='None')
         response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
     else:
         return jsonify({"status": "실패"}), 401
+    
+@admin_auth_bp.route('/refresh', methods=['POST'])
+def refresh():
+    refresh_token = request.cookies.get('refresh_token')
+    if not refresh_token:
+        return jsonify({"status": "실패", "message": "Refresh token이 없습니다"}), 401
+    
+    decoded = verify_token(refresh_token, REFRESH_SECRET_KEY)
+    if not decoded:
+        return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 refresh token입니다"}), 401
+    
+    username = decoded['username']
+    new_access_token = generate_access_token(username)
+    access_token_str = new_access_token.decode('utf-8')
+    
+    return jsonify({"status": "성공", "access_token": access_token_str})
 
 @admin_auth_bp.route('/protected', methods=['GET'])  
 def protected():  
