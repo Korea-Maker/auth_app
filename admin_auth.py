@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, make_response
+from flask_cors import CORS
 from functools import wraps
 from authlib.jose import jwt
 from datetime import datetime, timedelta, timezone
@@ -10,6 +11,7 @@ from bson import ObjectId
 load_dotenv()
 
 admin_auth_bp = Blueprint('admin_auth_bp', __name__)
+CORS(admin_auth_bp, supports_credentials=True, resources={r"/*": {"origins": ["https://resume.jongwook.xyz"]}})
 
 MONGO_USERNAME = os.environ.get('MONGO_USERNAME_AUTH')
 MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD_AUTH')
@@ -59,7 +61,7 @@ def generate_refresh_token(username):
     header = {"alg": "HS256"}
     payload = {
         "username": username,
-        "exp": datetime.now(timezone.utc) + timedelta(days=7)  # Refresh token expiration time
+        "exp": datetime.now(timezone.utc) + timedelta(days=1)  # Refresh token expiration time
     }
     token = jwt.encode(header, payload, REFRESH_SECRET_KEY)
     return token
@@ -118,8 +120,18 @@ def login():
     else:
         return jsonify({"status": "실패"}), 401
     
-@admin_auth_bp.route('/refresh', methods=['POST'])
+@admin_auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response, 200
+
+    # Actual POST request handling...
     refresh_token = request.cookies.get('refresh_token')
     if not refresh_token:
         return jsonify({"status": "실패", "message": "Refresh token이 없습니다"}), 401
@@ -134,9 +146,19 @@ def refresh():
     
     return jsonify({"status": "성공", "access_token": access_token_str})
 
-@admin_auth_bp.route('/protected', methods=['GET'])  
-def protected():  
-    return jsonify({"status": "성공", "message": "보호된 경로에 대한 액세스가 허용되었습니다"})  
+@admin_auth_bp.route('/protected', methods=['GET', 'OPTIONS'])
+def protected():
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response, 200
+
+    # Your actual GET request handling logic...
+    return jsonify({"status": "성공", "message": "보호된 경로에 대한 액세스가 허용되었습니다"})
 
 
 # @admin_auth_bp.route('/update', methods=['PUT'])  
