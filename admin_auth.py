@@ -46,7 +46,7 @@ def mongo_update_user(collection, username, password):
     )
     return None
 
-def generate_token(username):
+def generate_access_token(username):
     header = {"alg": "HS256"}
     payload = {
         "username": username,
