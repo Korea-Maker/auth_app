@@ -67,21 +67,30 @@ def verify_token(token):
     
 @admin_auth_bp.before_request  
 def check_jwt():  
-    # 로그인 엔드포인트는 제외  
+    # Exclude the login endpoint  
     if request.endpoint == 'admin_auth_bp.login':  
-        return  # 로그인 엔드포인트에서는 검증을 수행하지 않음  
-    
-    token = request.cookies.get('token')  
-    
-    if not token:  
+        return  # No verification for login endpoint
+
+    # Initialize token variable
+    token = None
+
+    # Check for token in the Authorization header first
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]  # Extract the token part from the header
+    else:
+        # Fall back to checking the token in cookies
+        token = request.cookies.get('token')
+
+    if not token:
         return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401  
     
     decoded = verify_token(token)  
-    if not decoded:  
+    if not decoded:
         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401  
 
-    # 요청에 사용자 정보를 추가  
-    request.user = decoded['username'] 
+    # Attach user information to the request for further processing
+    request.user = decoded['username']
     
 @admin_auth_bp.route('/login', methods=['POST'])
 def login():
