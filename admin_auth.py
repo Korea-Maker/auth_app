@@ -103,7 +103,7 @@ def login():
         token = generate_token(id)
         token_str = token.decode('utf-8')  # 바이트를 문자열로 디코딩 => 응답에 포함하기 위함인데 이전에 바이트로 응답을 보낼 경우 에러가 발생했었음
         response = make_response(jsonify({"status": "성공"}))
-        response.set_cookie('token', token_str, httponly=True, secure=True, samesite='Lax')
+        response.set_cookie('token', token_str, httponly=True, secure=True, samesite='None')
         response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
