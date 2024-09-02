@@ -138,15 +138,24 @@ def refresh():
     
     return jsonify({"status": "성공", "access_token": new_access_token.decode('utf-8')})
 
-# Example Secure Endpoints
-@admin_auth_bp.route('/update', methods=['PUT', 'OPTIONS', 'GET'])  
-def update_auth():  
-    db = connect_mongo()  
-    id = request.user  # Use user information from token
-    new_pw = request.json.get('new_pw')  
-    
+@admin_auth_bp.route('/update', methods=['POST'])
+def update_auth():
+    # Ensure the request is handled correctly
+    response = make_response()
+
+    # Example logic for handling request
+    db = connect_mongo()
+    id = request.user
+    new_pw = request.json.get('new_pw')
+
+    # Set appropriate headers
+    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', 'https://resume.jongwook.xyz'))
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+
     mongo_update_user(db, id, new_pw)  
-    return jsonify({"status": "성공"}) 
+    return jsonify({"status": "성공"}), 200
 
 @admin_auth_bp.route('/users/update', methods=['POST'])  
 def update_user():  
