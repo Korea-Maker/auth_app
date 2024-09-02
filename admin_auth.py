@@ -139,7 +139,7 @@ def refresh():
     return jsonify({"status": "성공", "access_token": new_access_token.decode('utf-8')})
 
 # Example Secure Endpoints
-@admin_auth_bp.route('/update', methods=['PUT'])  
+@admin_auth_bp.route('/update', methods=['PUT', 'OPTIONS', 'GET'])  
 def update_auth():  
     db = connect_mongo()  
     id = request.user  # Use user information from token
