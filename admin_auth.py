@@ -76,9 +76,12 @@ def verify_token(token, secret_key):
 # Middleware for Authentication
 @admin_auth_bp.before_request  
 def check_jwt():  
+    if request.method == 'OPTIONS':
+        return  # Skip JWT validation for preflight requests
+
     exempt_routes = ['admin_auth_bp.login', 'admin_auth_bp.refresh']
     if request.endpoint in exempt_routes:
-        return  
+        return  # Skip JWT validation for specific endpoints
 
     token = None
     auth_header = request.headers.get('Authorization')
@@ -89,7 +92,7 @@ def check_jwt():
 
     if not token:
         return jsonify({"status": "실패", "message": "토큰이 없습니다"}), 401  
-    
+
     decoded = verify_token(token, JWT_SECRET_KEY)  
     if not decoded:
         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401  
