@@ -98,8 +98,15 @@ def check_jwt():
         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401  
 
     request.user = decoded['username']
+    
+@admin_auth_bp.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = 'https://resume.jongwook.xyz'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
+    return response
 
-# Authentication Endpoints
 @admin_auth_bp.route('/login', methods=['POST'])
 def login():
     db = connect_mongo()
@@ -112,16 +119,25 @@ def login():
         refresh_token = generate_refresh_token(id)
         
         response = make_response(jsonify({"status": "성공", "access_token": access_token.decode('utf-8')}))
-        response.set_cookie('refresh_token', refresh_token.decode('utf-8'), httponly=True, secure=True, samesite='None')
+        
+        # Set refresh token cookie with appropriate attributes
+        response.set_cookie(
+            'refresh_token', 
+            refresh_token.decode('utf-8'), 
+            httponly=True, 
+            secure=True, 
+            samesite='None', 
+            path='/'  # Ensure the cookie is sent for all paths in the domain
+        )
         response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
     else:
         return jsonify({"status": "실패"}), 401
+
     
 @admin_auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
-
     refresh_token = request.cookies.get('refresh_token')
     if not refresh_token:
         return jsonify({"status": "실패", "message": "Refresh token이 없습니다"}), 401
