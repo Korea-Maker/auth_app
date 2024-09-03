@@ -1,3 +1,5 @@
+# admin_auth.py
+
 from flask import Blueprint, request, jsonify, make_response
 from flask_cors import CORS
 from functools import wraps
@@ -12,7 +14,7 @@ load_dotenv()
 
 # Blueprint Setup
 admin_auth_bp = Blueprint('admin_auth_bp', __name__)
-CORS(admin_auth_bp, resources={r"/authenticate": {"origins": "*"}}, supports_credentials=True)
+CORS(admin_auth_bp, resources={r"/*": {"origins": "https://resume.jongwook.xyz"}}, supports_credentials=True)
 
 # Environment Configuration
 MONGO_USERNAME = os.environ.get('MONGO_USERNAME_AUTH')
@@ -74,10 +76,9 @@ def verify_token(token, secret_key):
 # Middleware for Authentication
 @admin_auth_bp.before_request  
 def check_jwt():  
-    # Exclude certain routes from requiring JWT validation
     exempt_routes = ['admin_auth_bp.login', 'admin_auth_bp.refresh']
     if request.endpoint in exempt_routes:
-        return  # Skip JWT validation for exempt routes
+        return  
 
     token = None
     auth_header = request.headers.get('Authorization')
@@ -117,6 +118,14 @@ def login():
     
 @admin_auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "https://resume.jongwook.xyz")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
+
     refresh_token = request.cookies.get('refresh_token')
     if not refresh_token:
         return jsonify({"status": "실패", "message": "Refresh token이 없습니다"}), 401
@@ -130,6 +139,13 @@ def refresh():
     
     return jsonify({"status": "성공", "access_token": new_access_token.decode('utf-8')})
 
-@admin_auth_bp.route('/authenticate', methods=['GET'])
+@admin_auth_bp.route('/authenticate', methods=['GET', 'OPTIONS'])
 def authenticate():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "https://resume.jongwook.xyz")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET,OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
     return jsonify({"status": "성공"}), 200
