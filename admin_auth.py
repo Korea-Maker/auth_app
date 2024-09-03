@@ -121,13 +121,6 @@ def login():
     
 @admin_auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
-    if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "https://resume.jongwook.xyz")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-        response.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
 
     refresh_token = request.cookies.get('refresh_token')
     if not refresh_token:
@@ -144,11 +137,4 @@ def refresh():
 
 @admin_auth_bp.route('/authenticate', methods=['GET', 'OPTIONS'])
 def authenticate():
-    if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "https://resume.jongwook.xyz")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-        response.headers.add("Access-Control-Allow-Methods", "GET,OPTIONS")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
     return jsonify({"status": "성공"}), 200
