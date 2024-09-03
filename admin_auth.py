@@ -138,6 +138,14 @@ def login():
     
 @admin_auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response, 200
+    
     refresh_token = request.cookies.get('refresh_token')
     if not refresh_token:
         return jsonify({"status": "실패", "message": "Refresh token이 없습니다"}), 401
