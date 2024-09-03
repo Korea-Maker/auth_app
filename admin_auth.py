@@ -12,7 +12,7 @@ load_dotenv()
 
 # Blueprint Setup
 admin_auth_bp = Blueprint('admin_auth_bp', __name__)
-CORS(admin_auth_bp, resources={r"/authenticate": {"origins": "*"}}, supports_credentials=True)
+CORS(admin_auth_bp, supports_credentials=True)
 
 # Environment Configuration
 MONGO_USERNAME = os.environ.get('MONGO_USERNAME_AUTH')
@@ -117,14 +117,6 @@ def login():
     
 @admin_auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
-    if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
-        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response, 200
-
     refresh_token = request.cookies.get('refresh_token')
     if not refresh_token:
         return jsonify({"status": "실패", "message": "Refresh token이 없습니다"}), 401
@@ -141,36 +133,3 @@ def refresh():
 @admin_auth_bp.route('/authenticate', methods=['GET'])
 def authenticate():
     return jsonify({"status": "성공"}), 200
-
-# @admin_auth_bp.route('/update', methods=['POST'])
-# def update_auth():
-#     # Ensure the request is handled correctly
-#     response = make_response()
-
-#     # Example logic for handling request
-#     db = connect_mongo()
-#     id = request.user
-#     new_pw = request.json.get('new_pw')
-
-#     # Set appropriate headers
-#     response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', 'https://resume.jongwook.xyz'))
-#     response.headers.add('Access-Control-Allow-Credentials', 'true')
-#     response.headers.add('Access-Control-Allow-Headers', 'Authorization, Content-Type')
-#     response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-
-#     mongo_update_user(db, id, new_pw)  
-#     return jsonify({"status": "성공"}), 200
-
-# @admin_auth_bp.route('/users/update', methods=['POST'])  
-# def update_user():  
-#     db = connect_mongo()  
-#     name = request.json.get('name')  
-#     birth = request.json.get('birth')  
-#     location = request.json.get('location')  
-#     phone = request.json.get('phone')  
-#     email = request.json.get('email')  
-#     education = request.json.get('education')  
-
-#     # Add logic to update user information
-    
-#     return jsonify({"status": "성공", "message": "사용자 정보가 업데이트되었습니다."}) 
