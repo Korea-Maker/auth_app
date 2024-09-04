@@ -1,5 +1,3 @@
-# admin_auth.py
-
 from flask import Blueprint, request, jsonify, make_response
 from flask_cors import CORS
 from functools import wraps
@@ -98,14 +96,6 @@ def check_jwt():
         return jsonify({"status": "실패", "message": "유효하지 않거나 만료된 토큰입니다"}), 401  
 
     request.user = decoded['username']
-    
-# @admin_auth_bp.after_request
-# def add_cors_headers(response):
-#     response.headers['Access-Control-Allow-Origin'] = 'https://resume.jongwook.xyz'
-#     response.headers['Access-Control-Allow-Credentials'] = 'true'
-#     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-#     response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type'
-#     return response
 
 @admin_auth_bp.route('/login', methods=['POST'])
 def login():
