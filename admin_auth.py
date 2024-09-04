@@ -163,7 +163,7 @@ def refresh():
 def authenticate():
     return jsonify({"status": "성공"}), 200
 
-@admin_auth_bp.route('/logout', method=['POST'])
+@admin_auth_bp.route('/logout', methods=['POST'])
 def logout():
     response = make_response(jsonify({"status": "성공", "message": "로그아웃 되었습니다"}))
     response.set_cookie('refresh_token', '', expires=0, secure=True, httponly=True, samesite='None')
