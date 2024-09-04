@@ -79,7 +79,7 @@ def check_jwt():
     if request.method == 'OPTIONS':
         return  # Skip JWT validation for preflight requests
 
-    exempt_routes = ['admin_auth_bp.login', 'admin_auth_bp.refresh']
+    exempt_routes = ['admin_auth_bp.login', 'admin_auth_bp.refresh', 'admin_auth_bp.logout']
     if request.endpoint in exempt_routes:
         return  # Skip JWT validation for specific endpoints
 
