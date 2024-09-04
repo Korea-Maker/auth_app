@@ -162,3 +162,11 @@ def refresh():
 @admin_auth_bp.route('/authenticate', methods=['GET', 'OPTIONS'])
 def authenticate():
     return jsonify({"status": "성공"}), 200
+
+@admin_auth_bp.route('/logout', method=['POST'])
+def logout():
+    response = make_response(jsonify({"status": "성공", "message": "로그아웃 되었습니다"}))
+    response.set_cookie('refresh_token', '', expires=0, secure=True, httponly=True, samesite='None')
+    response.headers.add('Access-Control-Allow-Origin', 'https://resume.jongwook.xyz')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
